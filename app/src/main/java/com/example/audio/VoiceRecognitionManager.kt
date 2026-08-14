@@ -34,14 +34,19 @@ class VoiceRecognitionManager(private val context: Context) {
     }
 
     private fun initRecognizer() {
-        if (SpeechRecognizer.isRecognitionAvailable(context)) {
-            try {
+        try {
+            if (SpeechRecognizer.isRecognitionAvailable(context)) {
                 speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
                     setRecognitionListener(createListener())
                 }
-            } catch (e: Exception) {
-                Log.e("VoiceRecognition", "Error initializing SpeechRecognizer", e)
+            } else {
+                Log.w("VoiceRecognition", "SpeechRecognizer.isRecognitionAvailable returned false; attempting fallback createSpeechRecognizer")
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
+                    setRecognitionListener(createListener())
+                }
             }
+        } catch (e: Exception) {
+            Log.e("VoiceRecognition", "Error initializing SpeechRecognizer", e)
         }
     }
 

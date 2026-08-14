@@ -15,17 +15,25 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,8 +50,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -58,6 +69,7 @@ import com.example.ui.theme.GradientPinkCanvas
 import com.example.ui.theme.PinkPrimary
 import com.example.ui.theme.PinkSecondary
 import com.example.ui.theme.PinkTertiary
+import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.TextTertiary
 import com.example.viewmodel.AssistantState
@@ -69,8 +81,10 @@ fun MahiScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     val uiState by viewModel.uiState.collectAsState()
     var showSettingsSheet by remember { mutableStateOf(false) }
+    var textInput by remember { mutableStateOf("") }
 
     // Request Audio Permission Launcher
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -275,7 +289,75 @@ fun MahiScreen(
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = 1.4.sp,
                         color = PinkTertiary,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 10.dp)
+                        modifier = Modifier.padding(top = 8.dp, bottom = 6.dp)
+                    )
+                }
+
+                // Text Prompt Input Bar (Allows typing to Myra directly without speech)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 4.dp)
+                        .imePadding(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = textInput,
+                        onValueChange = { textInput = it },
+                        placeholder = {
+                            Text(
+                                text = "Ask or say anything to Myra...",
+                                fontSize = 13.sp,
+                                color = TextTertiary
+                            )
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xF5FFFFFF),
+                            unfocusedContainerColor = Color(0xD9FFFFFF),
+                            focusedBorderColor = PinkPrimary,
+                            unfocusedBorderColor = Color(0x33F472B6),
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            cursorColor = PinkPrimary
+                        ),
+                        textStyle = TextStyle(fontSize = 14.sp),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(
+                            onSend = {
+                                if (textInput.isNotBlank()) {
+                                    val prompt = textInput.trim()
+                                    textInput = ""
+                                    keyboardController?.hide()
+                                    viewModel.selectStarterPrompt(prompt)
+                                }
+                            }
+                        ),
+                        trailingIcon = {
+                            if (textInput.isNotBlank()) {
+                                IconButton(
+                                    onClick = {
+                                        val prompt = textInput.trim()
+                                        textInput = ""
+                                        keyboardController?.hide()
+                                        viewModel.selectStarterPrompt(prompt)
+                                    },
+                                    modifier = Modifier.testTag("send_text_button")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Send,
+                                        contentDescription = "Send message",
+                                        tint = PinkPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .testTag("custom_prompt_input")
                     )
                 }
 
