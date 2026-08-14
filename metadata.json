@@ -1,0 +1,6 @@
+{
+  "name": "Myra",
+  "description": "Real-time voice AI assistant with a witty, sassy, and charming personality.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
